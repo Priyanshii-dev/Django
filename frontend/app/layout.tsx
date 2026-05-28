@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
 import "../styles/globals.css";
+import { QueryProvider } from "@/providers/query-provider";
+import { Toaster } from "sonner";
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Todo",
@@ -13,7 +16,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <QueryProvider>
+          {children}
+          <Toaster richColors position="top-right" />
+        </QueryProvider>
+      </body>
     </html>
   );
 }

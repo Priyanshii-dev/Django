@@ -3,6 +3,9 @@ export const ROUTES = {
   login: "/login",
   register: "/register",
   tasks: "/tasks",
+  taskCreate: "/tasks/create",
+  taskEdit: (id: number) => `/tasks/edit/${id}`,
+  taskDelete: (id: number) => `/tasks/delete/${id}`,
 } as const;
 
 export const API_ENDPOINTS = {
@@ -13,6 +16,8 @@ export const API_ENDPOINTS = {
   tasks: {
     list: "/api/tasks/",
     detail: (id: number) => `/api/tasks/${id}/`,
+    edit:   (id: number) => `/api/tasks/${id}/`,
+    delete: (id: number) => `/api/tasks/${id}/`,
     toggle: (id: number) => `/api/tasks/${id}/toggle/`,
   },
 } as const;

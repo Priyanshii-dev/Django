@@ -1,13 +1,12 @@
+import axios, { AxiosError } from "axios";
+import { useAuthStore } from "../store/auth-store";
+import { ApiErrorPayload } from "./hooks/types";
+
 export const API_BASE_URL =
   process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
-type ApiErrorPayload = {
-  detail?: string;
-  [key: string]: unknown;
-};
-
 function getErrorMessage(data: ApiErrorPayload | null) {
-  if (data?.detail) {
+  if (data?.detail && typeof data.detail === "string") {
     return data.detail;
   }
 
@@ -19,31 +18,70 @@ function getErrorMessage(data: ApiErrorPayload | null) {
   return fieldErrors || "Request failed";
 }
 
-export async function apiRequest<T>(
-  path: string,
-  options: RequestInit = {},
-  token?: string | null,
-): Promise<T> {
-  const accessToken =
-    token === undefined && typeof window !== "undefined"
-      ? localStorage.getItem("todo_access_token")
-      : token;
+const instance = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
 
-  const response = await fetch(`${API_BASE_URL}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-      ...options.headers,
-    },
+export async function apiRequest<T>(
+  url: string,
+  options: RequestInit = {},
+): Promise<T> {
+  const response = await instance.request<T>({
+    url,
+    method: options.method ?? "GET",
+    data: options.body,
+    headers: options.headers as Record<string, string> | undefined,
   });
 
-  const text = await response.text();
-  const data = text ? JSON.parse(text) : null;
-
-  if (!response.ok) {
-    throw new Error(getErrorMessage(data));
+ if (
+    response.data &&
+    typeof response.data === "object" &&
+    "statusCode" in response.data &&
+    "data" in response.data
+  ) {
+    return response.data.data as T;
   }
 
-  return data as T;
+  return response.data as T;
+
 }
+
+instance.interceptors.request.use(
+  (config) => {
+    const token = useAuthStore.getState().accessToken;
+
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
+    return config;
+  },
+  (error) => Promise.reject(error),
+);
+
+instance.interceptors.response.use(
+  (response) => response,
+  (error: AxiosError<ApiErrorPayload>) => {
+    const status = error.response?.status;
+    const data = error.response?.data ?? null;
+
+    // Auto logout on unauthorized
+    if (status === 401 || status === 440) {
+      useAuthStore.getState().clearAuth();
+
+      if (typeof window !== "undefined") {
+        window.location.href = "/";
+      }
+    }
+
+    // Create clean error message
+    const message = getErrorMessage(data);
+
+    return Promise.reject(new Error(message));
+  },
+);
+
+export default instance;

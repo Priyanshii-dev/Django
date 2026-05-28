@@ -1,6 +1,6 @@
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // 7 days
 
-export function saveTokens(access: string, refresh: string) {
+export function saveTokens(access: string, refresh = "") {
   if (typeof window === "undefined") {
     return;
   }

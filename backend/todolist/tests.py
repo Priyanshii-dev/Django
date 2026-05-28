@@ -3,6 +3,8 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.test import APIClient
 
+from .models import Task
+
 
 class AuthAPITests(TestCase):
 
@@ -21,8 +23,11 @@ class AuthAPITests(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertTrue(User.objects.filter(username="newuser").exists())
-        self.assertIn("access", response.data)
-        self.assertIn("refresh", response.data)
+        self.assertTrue(response.data["success"])
+        self.assertEqual(response.data["statusCode"], status.HTTP_201_CREATED)
+        self.assertEqual(response.data["message"], "Registration successful")
+        self.assertIn("token", response.data["data"])
+        self.assertEqual(response.data["data"]["user"]["username"], "newuser")
 
     def test_register_api_rejects_duplicate_username(self):
         User.objects.create_user(
@@ -58,8 +63,11 @@ class AuthAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertIn("access", response.data)
-        self.assertIn("refresh", response.data)
+        self.assertTrue(response.data["success"])
+        self.assertEqual(response.data["statusCode"], status.HTTP_200_OK)
+        self.assertEqual(response.data["message"], "Login successful")
+        self.assertIn("token", response.data["data"])
+        self.assertEqual(response.data["data"]["user"]["username"], "activeuser")
 
     def test_login_api_rejects_invalid_credentials(self):
         response = self.client.post(
@@ -72,7 +80,136 @@ class AuthAPITests(TestCase):
         )
 
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertFalse(response.data["success"])
         self.assertEqual(
-            response.data["detail"],
+            response.data["message"],
             "Invalid username or password.",
         )
+
+
+class TaskAPITests(TestCase):
+
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username="taskuser",
+            password="StrongPass123!",
+        )
+        self.other_user = User.objects.create_user(
+            username="otheruser",
+            password="StrongPass123!",
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def test_update_task_api_edits_current_users_task(self):
+        task = Task.objects.create(
+            user=self.user,
+            task="Old task",
+            is_completed=False,
+        )
+
+        response = self.client.patch(
+            f"/api/tasks/{task.id}/",
+            {
+                "task": "Updated task",
+                "is_completed": True,
+            },
+            format="json",
+        )
+
+        task.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(task.task, "Updated task")
+        self.assertTrue(task.is_completed)
+        self.assertEqual(response.data["task"], "Updated task")
+        self.assertTrue(response.data["is_completed"])
+
+    def test_list_task_api_returns_only_current_users_tasks(self):
+        own_task = Task.objects.create(
+            user=self.user,
+            task="My task",
+        )
+        Task.objects.create(
+            user=self.other_user,
+            task="Other user's task",
+        )
+
+        response = self.client.get("/api/tasks/")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 1)
+        self.assertEqual(response.data[0]["id"], own_task.id)
+        self.assertEqual(response.data[0]["task"], "My task")
+
+    def test_create_task_api_assigns_current_user(self):
+        response = self.client.post(
+            "/api/tasks/",
+            {
+                "task": "Owned task",
+                "is_completed": False,
+            },
+            format="json",
+        )
+
+        task = Task.objects.get(id=response.data["id"])
+
+        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
+        self.assertEqual(task.user, self.user)
+        
+    def test_update_task_api_rejects_empty_task(self):
+        task = Task.objects.create(
+            user=self.user,
+            task="Keep me valid",
+        )
+
+        response = self.client.patch(
+            f"/api/tasks/{task.id}/",
+            {"task": "   "},
+            format="json",
+        )
+
+        task.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(task.task, "Keep me valid")
+        self.assertIn("task", response.data)
+
+    def test_update_task_api_cannot_edit_another_users_task(self):
+        task = Task.objects.create(
+            user=self.other_user,
+            task="Private task",
+        )
+
+        response = self.client.patch(
+            f"/api/tasks/{task.id}/",
+            {"task": "Changed by wrong user"},
+            format="json",
+        )
+
+        task.refresh_from_db()
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertEqual(task.task, "Private task")
+
+    def test_delete_task_api_deletes_current_users_task(self):
+        task = Task.objects.create(
+            user=self.user,
+            task="Delete me",
+        )
+
+        response = self.client.delete(f"/api/tasks/{task.id}/")
+
+        self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
+        self.assertFalse(Task.objects.filter(id=task.id).exists())
+
+    def test_delete_task_api_cannot_delete_another_users_task(self):
+        task = Task.objects.create(
+            user=self.other_user,
+            task="Do not delete me",
+        )
+
+        response = self.client.delete(f"/api/tasks/{task.id}/")
+
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertTrue(Task.objects.filter(id=task.id).exists())

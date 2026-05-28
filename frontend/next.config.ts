@@ -1,5 +1,11 @@
 import type { NextConfig } from "next";
 
-const nextConfig: NextConfig = {};
+const nextConfig = {
+  output: "standalone",
+  experimental: {
+    reactCompiler: true,
+    ppr: false,
+  },
+};
 
 export default nextConfig;

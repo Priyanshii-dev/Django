@@ -6,6 +6,12 @@
   color: #1f2933;
 }
 
+:root.dark {
+  color-scheme: dark;
+  background: #0f172a;
+  color: #f8fafc;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -14,10 +20,13 @@ body {
   min-height: 100vh;
   margin: 0;
   font-family: Arial, Helvetica, sans-serif;
+  background: inherit;
+  color: inherit;
 }
 
 button,
-input {
+input,
+select {
   font: inherit;
 }
 

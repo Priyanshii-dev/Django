@@ -1,33 +1,61 @@
-"use client";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { ApiError, ApiResponse, UsePostDataProps, VariablesWithId } from "./types";
+import instance from "../instance";
 
-import { useCallback, useState } from "react";
-import { request } from "../../lib/api";
+const usePostData = <TData = unknown, TVariables = unknown>({
+  useFormData = false,
+  showToast = true,
+  url,
+  mutationOptions,
+  headers = {},
+  refetchQueries,
+  onSuccess = () => {},
+}: UsePostDataProps<TData, TVariables>) => {
+  const queryClient = useQueryClient();
 
-export function usePost<TResponse = unknown, TPayload = unknown>() {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  return useMutation<TData, ApiError, TVariables>({
+    mutationFn: async (variables: TVariables): Promise<TData> => {
+      const finalHeaders: Record<string, string> = {
+        ...headers,
+        ...(useFormData ? { "Content-Type": "multipart/form-data" } : {}),
+      };
 
-  const execute = useCallback(async (path: string, payload?: TPayload) => {
-    setLoading(true);
-    setError(null);
+      let finalUrl = url;
+      // Handle cases where ID might be passed in variables for a POST (less common but in reference)
+      const variablesWithId = variables as VariablesWithId;
+      if (variablesWithId?.id !== undefined) {
+        finalUrl = `${url}${encodeURIComponent(variablesWithId.id)}`;
+      }
 
-    try {
-      return await request<TResponse>(path, {
-        method: "POST",
-        body: payload === undefined ? undefined : JSON.stringify(payload),
+      const response = await instance.post<ApiResponse<TData>>(finalUrl, variables, {
+        headers: finalHeaders,
       });
-    } catch (err) {
-      const message = err instanceof Error ? err.message : "Failed to submit";
-      setError(message);
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  }, []);
 
-  return {
-    execute,
-    loading,
-    error,
-  };
-}
+      if (!response.data?.error) {
+        const { statusCode, message, data } = response.data;
+
+        if (statusCode === 200 || statusCode === 201) {
+          if (showToast) {
+            toast.success(message || "Data posted successfully");
+          }
+          return data;
+        }
+      }
+
+      throw new Error(response.data?.message || "Request failed.");
+    },
+
+    onSuccess: async (data: TData) => {
+      if (refetchQueries) {
+        await Promise.all(
+          refetchQueries.map((queryKey) => queryClient.refetchQueries({ queryKey: [queryKey] }))
+        );
+      }
+      onSuccess(data);
+    },
+    ...mutationOptions,
+  });
+};
+
+export default usePostData;

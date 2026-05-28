@@ -1,49 +1,98 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { PRIVATE_ROUTES, PUBLIC_ROUTES, ROUTES } from "./api/endpoints";
+
+import {
+  PRIVATE_ROUTES,
+  PUBLIC_ROUTES,
+  ROUTES,
+} from "./api/endpoints";
 
 function isRouteMatch(pathname: string, routes: readonly string[]) {
   return routes.some(
-    (route) => pathname === route || pathname.startsWith(`${route}/`),
+    (route) =>
+      pathname === route ||
+      pathname.startsWith(`${route}/`),
   );
 }
 
-function getSafeNextPath(request: NextRequest) {
-  const nextPath = request.nextUrl.searchParams.get("next");
-
-  if (!nextPath || !nextPath.startsWith("/") || nextPath.startsWith("//")) {
-    return ROUTES.tasks;
-  }
-
-  return nextPath;
-}
-
+/**
+ * Proxy to handle route protection and redirection
+ * based on authentication state.
+ *
+ * Next.js 16+: Middleware is renamed to Proxy.
+ */
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
-  const hasAccessToken = Boolean(request.cookies.get("accessToken")?.value);
-  const isPublicRoute = isRouteMatch(pathname, PUBLIC_ROUTES);
-  const isPrivateRoute = isRouteMatch(pathname, PRIVATE_ROUTES);
 
-  if (pathname === ROUTES.home) {
-    return NextResponse.redirect(
-      new URL(hasAccessToken ? ROUTES.tasks : ROUTES.login, request.url),
-    );
+  // Check authentication
+  const accessToken =
+    request.cookies.get("accessToken")?.value;
+
+  const isAuthenticated = !!accessToken;
+
+  // Route checks
+  const isPublicRoute = isRouteMatch(
+    pathname,
+    PUBLIC_ROUTES,
+  );
+
+  const isPrivateRoute = isRouteMatch(
+    pathname,
+    PRIVATE_ROUTES,
+  );
+
+  /**
+   * If authenticated user visits public routes
+   * redirect them to tasks/dashboard.
+   */
+  if (isAuthenticated) {
+    if (
+      pathname === ROUTES.home ||
+      isPublicRoute
+    ) {
+      return NextResponse.redirect(
+        new URL(ROUTES.tasks, request.url),
+      );
+    }
   }
 
-  if (isPublicRoute && hasAccessToken) {
-    return NextResponse.redirect(new URL(getSafeNextPath(request), request.url));
+  /**
+   * If unauthenticated user visits private routes
+   * redirect to login page.
+   */
+  if (!isAuthenticated) {
+    if (isPrivateRoute) {
+      const loginUrl = new URL(
+        ROUTES.login,
+        request.url,
+      );
+
+      // Save original destination
+      loginUrl.searchParams.set(
+        "callbackUrl",
+        pathname,
+      );
+
+      return NextResponse.redirect(loginUrl);
+    }
   }
 
-  if (isPrivateRoute && !hasAccessToken) {
-    const loginUrl = new URL(ROUTES.login, request.url);
-    loginUrl.searchParams.set("next", pathname);
-
-    return NextResponse.redirect(loginUrl);
-  }
-
+  // Continue request
   return NextResponse.next();
 }
 
+/**
+ * Routes handled by proxy
+ */
 export const config = {
-  matcher: ["/", "/login", "/register", "/tasks/:path*"],
+  matcher: [
+    /*
+     * Match all routes except:
+     * - api
+     * - static files
+     * - image optimization
+     * - metadata files
+     */
+    "/((?!api|_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+  ],
 };

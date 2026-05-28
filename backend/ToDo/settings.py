@@ -98,6 +98,7 @@ SIMPLE_JWT = {
 }
 
 WSGI_APPLICATION = 'ToDo.wsgi.application'
+APPEND_SLASH = False
 
 
 # Database
@@ -153,6 +154,3 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 STATICFILES_DIRS = [
     BASE_DIR / "static"
 ]
-print("DB_NAME:", os.getenv("DB_NAME"))
-print("DB_USER:", os.getenv("DB_USER"))
-print("DB_PASSWORD:", os.getenv("DB_PASSWORD"))

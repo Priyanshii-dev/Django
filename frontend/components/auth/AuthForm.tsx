@@ -1,81 +1,93 @@
 "use client";
 
+import { Controller, useForm } from "react-hook-form";
+import type { AuthFormProps, AuthFormValues } from "@/features/auth/types/auth.types";
 import AuthTabs from "./AuthTabs";
-import { AuthFormProps } from "../../types";
+import { GlobalButton } from "@/global/button";
+import { GlobalForm, GlobalFormMessage } from "@/global/form";
+import { GlobalInput } from "@/global/input";
 
 export default function AuthForm({
   mode,
   onModeChange,
-  username,
-  setUsername,
-  password,
-  setPassword,
+  defaultValues,
   onSubmit,
   isBusy,
   message,
 }: AuthFormProps) {
+  const {
+    control,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<AuthFormValues>({
+    defaultValues: {
+      username: defaultValues?.username ?? "",
+      password: defaultValues?.password ?? "",
+    },
+  });
+
   return (
-    <form
-      onSubmit={onSubmit}
+    <GlobalForm
+      onSubmit={handleSubmit(onSubmit)}
       className="rounded-xl border border-[#d9dee5] bg-white p-6 shadow-sm"
     >
-<AuthTabs mode={mode} onModeChange={onModeChange} />
+      {onModeChange && (
+        <AuthTabs mode={mode} onModeChange={onModeChange} />
+      )}
 
-      <div className="mb-4">
-        <label
-          htmlFor="username"
-          className="mb-2 block text-sm font-semibold text-[#1f2933]"
-        >
-          Username
-        </label>
+      <Controller
+        name="username"
+        control={control}
+        rules={{
+          required: "Username must be at least 1 character",
+        }}
+        render={({ field }) => (
+          <GlobalInput
+            label="Username"
+            type="text"
+            placeholder="Enter username"
+            className="h-11 border-[#cfd6df] focus:border-[#3f7d58] focus:ring-2 focus:ring-[#3f7d58]/20"
+            error={errors.username?.message}
+            {...field}
+          />
+        )}
+      />
 
-        <input
-          id="username"
-          type="text"
-          value={username}
-          onChange={(event) => setUsername(event.target.value)}
-          className="h-11 w-full rounded-md border border-[#cfd6df] px-3 outline-none transition focus:border-[#3f7d58] focus:ring-2 focus:ring-[#3f7d58]/20"
-          placeholder="Enter username"
-          required
-        />
-      </div>
+      <Controller
+        name="password"
+        control={control}
+        rules={{
+          required: "Password must be at least 1 characters",
+        }}
+        render={({ field }) => (
+          <GlobalInput
+            label="Password"
+            type="password"
+            placeholder="Enter password"
+            className="h-11 border-[#cfd6df] focus:border-[#3f7d58] focus:ring-2 focus:ring-[#3f7d58]/20"
+            error={errors.password?.message}
+            {...field}
+          />
+        )}
+      />
 
-      <div className="mb-5">
-        <label
-          htmlFor="password"
-          className="mb-2 block text-sm font-semibold text-[#1f2933]"
-        >
-          Password
-        </label>
-
-        <input
-          id="password"
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          className="h-11 w-full rounded-md border border-[#cfd6df] px-3 outline-none transition focus:border-[#3f7d58] focus:ring-2 focus:ring-[#3f7d58]/20"
-          placeholder="Enter password"
-          required
-        />
-      </div>
-
-      <button
+      <GlobalButton
         type="submit"
         disabled={isBusy}
-        className="h-11 w-full rounded-md bg-[#2f6f4e] px-4 text-sm font-bold text-white transition hover:bg-[#255a40] disabled:cursor-not-allowed disabled:opacity-70"
+        className="h-11 w-full bg-[#2f6f4e] text-sm font-bold hover:bg-[#255a40]"
       >
         {isBusy
           ? "Please wait..."
           : mode === "login"
-          ? "Login"
-          : "Register"}
-      </button>
+            ? "Login"
+            : "Register"}
+      </GlobalButton>
 
       {message && (
-        <p className="mt-4 rounded-md bg-[#eef7f1] px-3 py-2 text-sm text-[#27563c]">
+        <GlobalFormMessage tone="success" className="mt-4 bg-[#eef7f1] text-[#27563c]">
           {message}
-        </p>
+        </GlobalFormMessage>
       )}
-    </form>
+    </GlobalForm>
   );
 }
