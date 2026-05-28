@@ -3,10 +3,9 @@
 import { useEffect, useState } from "react";
 import { CheckCircle2, MoreVertical, Pencil, Plus, Search, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useForm } from "react-hook-form";
+import { useQueryStates } from "nuqs";
 import { useAuthStore } from "@/store/auth-store";
 import { GlobalTable, GlobalTableColumn } from "@/global/global-table";
-import { ROUTES } from "@/api/endpoints";
 import { TaskNavbar } from "@/features/tasks/navbar/task-navbar";
 import TaskStats from "./TaskStats";
 import { CustomPagination } from "@/global/global-pagination";
@@ -15,6 +14,8 @@ import { useTasksPanel } from "@/features/tasks/actions/tasks.action";
 import { GlobalButton } from "@/global/button";
 import { GlobalFormMessage } from "@/global/form";
 import { GlobalInput, GlobalSelect } from "@/global/input";
+import { TASK_SEARCH_DEBOUNCE_MS, taskQueryParams } from "@/global/query-params";
+import useDebounce from "@/hooks/use-debounce";
 
 
 const STATUS_OPTIONS: { label: string; value: TaskStatusFilter }[] = [
@@ -23,37 +24,47 @@ const STATUS_OPTIONS: { label: string; value: TaskStatusFilter }[] = [
   { label: "Pending",     value: "pending" },
 ];
 
-const STATUS_FILTER: Record<TaskStatusFilter, (t: Task) => boolean> = {
-  all:       () => true,
-  completed: (t) => t.is_completed,
-  pending:   (t) => !t.is_completed,
-};
-
-type TaskFilterValues = {
-  search: string;
-  status: TaskStatusFilter;
-};
+const LOGIN_ROUTE = "/login";
+const TASK_CREATE_ROUTE = "/tasks/create";
+const taskEditRoute = (id: number) => `/tasks/edit/${id}`;
+const taskDeleteRoute = (id: number) => `/tasks/delete/${id}`;
 
 export default function TasksPanel() {
   const router = useRouter();
-  const { tasks, isAuthenticated, fetching, message } = useTasksPanel();
   const logout = useAuthStore((state) => state.logout);
 
-  const [page, setPage]               = useState(1);
-  const [pageSize, setPageSize]       = useState(5);
   const [openActionId, setOpenActionId] = useState<number | null>(null);
-
-  const { register, watch } = useForm<TaskFilterValues>({
-    defaultValues: {
-      search: "",
-      status: "all",
-    },
+  const [filters, setFilters] = useQueryStates(taskQueryParams, {
+    shallow: true,
   });
-  const { search, status } = watch();
+  const { page, limit, search, status } = filters;
+  const [searchInput, setSearchInput] = useState(search);
+  const debouncedSearch = useDebounce(searchInput, TASK_SEARCH_DEBOUNCE_MS);
+  const {
+    tasks,
+    totalTasks,
+    completedTasks,
+    totalItems,
+    totalPages,
+    currentPage,
+    isAuthenticated,
+    fetching,
+    message,
+  } = useTasksPanel({
+    page,
+    limit,
+    search,
+    status,
+  });
 
   useEffect(() => {
-    setPage(1);
-  }, [search, status, pageSize]);
+    setSearchInput(search);
+  }, [search]);
+
+  useEffect(() => {
+    if (debouncedSearch === search) return;
+    setFilters({ search: debouncedSearch, page: 1 });
+  }, [debouncedSearch, search, setFilters]);
 
   useEffect(() => {
     if (openActionId === null) return;
@@ -68,28 +79,16 @@ export default function TasksPanel() {
 
   if (!isAuthenticated) {
     return (
-      <div className="mx-auto mt-8 max-w-2xl rounded-lg border border-slate-200 bg-white p-6 text-center shadow-sm dark:border-slate-800 dark:bg-slate-950">
-        <p className="text-lg font-semibold text-slate-950 dark:text-white">
+      <div className="mx-auto mt-8 max-w-2xl rounded-lg border border-app-border bg-app-surface p-6 text-center shadow-sm dark:border-app-border-dark dark:bg-app-surface-dark">
+        <p className="text-lg font-semibold text-app-text dark:text-app-text-dark">
           Please login to manage tasks.
         </p>
-        <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
+        <p className="mt-2 text-sm text-app-muted dark:text-app-muted-dark">
           Once you log in, your tasks will appear here.
         </p>
       </div>
     );
   }
-
-  const normalizedSearch = search.trim().toLowerCase();
-  const filteredTasks = tasks.filter(
-    (t) => t.task.toLowerCase().includes(normalizedSearch) && STATUS_FILTER[status](t)
-  );
-
-  const totalPages    = Math.max(1, Math.ceil(filteredTasks.length / pageSize));
-  const currentPage   = Math.min(page, totalPages);
-  const paginatedTasks = filteredTasks.slice((currentPage - 1) * pageSize, currentPage * pageSize);
-
-  const total     = tasks.length;
-  const completed = tasks.filter((t) => t.is_completed).length;
 
   const columns: GlobalTableColumn<Task>[] = [
     {
@@ -102,7 +101,7 @@ export default function TasksPanel() {
       key: "task",
       header: "Name",
       render: (task) => (
-        <span className={task.is_completed ? "text-slate-400 line-through" : ""}>
+        <span className={task.is_completed ? "text-app-placeholder line-through" : ""}>
           {task.task}
         </span>
       ),
@@ -115,8 +114,8 @@ export default function TasksPanel() {
         <span
           className={`inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold ${
             task.is_completed
-              ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-              : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+              ? "bg-app-success-soft text-app-success dark:bg-app-success-soft-dark"
+              : "bg-app-warning-soft text-app-warning dark:bg-app-warning-soft-dark"
           }`}
         >
           {task.is_completed && <CheckCircle2 className="size-3.5" />}
@@ -141,20 +140,20 @@ export default function TasksPanel() {
           </GlobalButton>
 
           {openActionId === task.id && (
-            <div className="absolute right-0 top-9 z-10 w-36 rounded-md border border-slate-200 bg-white p-1 text-left shadow-lg dark:border-slate-800 dark:bg-slate-950">
+            <div className="absolute right-0 top-9 z-10 w-36 rounded-md border border-app-border bg-app-surface p-1 text-left shadow-lg dark:border-app-border-dark dark:bg-app-surface-dark">
               <GlobalButton
                 type="button"
                 variant="ghost"
-                onClick={() => router.push(ROUTES.taskEdit(task.id))}
-                className="flex h-auto w-full justify-start rounded px-3 py-2 text-sm text-slate-700 dark:text-slate-200"
+                onClick={() => router.push(taskEditRoute(task.id))}
+                className="flex h-auto w-full justify-start rounded px-3 py-2 text-sm text-app-text dark:text-app-text-dark"
               >
                 <Pencil className="size-4" /> Edit
               </GlobalButton>
               <GlobalButton
                 type="button"
                 variant="ghost"
-                onClick={() => router.push(ROUTES.taskDelete(task.id))}
-                className="flex h-auto w-full justify-start rounded px-3 py-2 text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+                onClick={() => router.push(taskDeleteRoute(task.id))}
+                className="flex h-auto w-full justify-start rounded px-3 py-2 text-sm text-app-danger hover:bg-app-danger-soft dark:hover:bg-app-danger-soft-dark"
               >
                 <Trash2 className="size-4" /> Delete
               </GlobalButton>
@@ -167,31 +166,39 @@ export default function TasksPanel() {
 
   return (
     <>
-      <TaskNavbar onLogout={() => { logout(); router.push(ROUTES.login); }} />
+      <TaskNavbar onLogout={() => { logout(); router.push(LOGIN_ROUTE); }} />
 
-      <section className="px-4 py-6 sm:px-6">
-        <TaskStats total={total} completed={completed} />
+      <section className="w-full  py-5 sm:px-6 sm:py-6">
+        <TaskStats total={totalTasks} completed={completedTasks} />
 
-        <div className="mb-4 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-950 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 flex-col gap-3 sm:flex-row">
+        <div className="mb-4 flex flex-col gap-3 rounded-lg border border-app-border bg-app-surface p-4 shadow-sm dark:border-app-border-dark dark:bg-app-surface-dark sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex min-w-0 flex-1 flex-col gap-3 sm:flex-row">
             <GlobalInput
+              value={searchInput}
+              onChange={(event) => setSearchInput(event.target.value)}
               placeholder="Search by task name"
               leftIcon={<Search className="size-4" />}
-              containerClassName="sm:max-w-sm sm:flex-1"
-              {...register("search")}
+              containerClassName="w-full sm:max-w-sm sm:flex-1"
             />
 
             <GlobalSelect
+              value={status}
+              onChange={(event) =>
+                setFilters({
+                  status: event.target.value as TaskStatusFilter,
+                  page: 1,
+                })
+              }
               options={STATUS_OPTIONS}
-              containerClassName="sm:w-44"
+              containerClassName="w-full sm:w-44"
               className="w-full"
-              {...register("status")}
             />
           </div>
 
           <GlobalButton
             type="button"
-            onClick={() => router.push(ROUTES.taskCreate)}
+            onClick={() => router.push(TASK_CREATE_ROUTE)}
+            className="w-full sm:w-auto"
           >
             <Plus className="size-4" /> Add Task
           </GlobalButton>
@@ -204,7 +211,7 @@ export default function TasksPanel() {
         )}
 
         <GlobalTable
-          data={paginatedTasks}
+          data={tasks}
           columns={columns}
           getRowKey={(task) => task.id}
           loading={fetching}
@@ -214,10 +221,12 @@ export default function TasksPanel() {
         <CustomPagination
           currentPage={currentPage}
           totalPages={totalPages}
-          onPageChange={setPage}
-          itemsPerPage={pageSize}
-          onItemsPerPageChange={setPageSize}
-          totalItems={filteredTasks.length}
+          onPageChange={(nextPage) => setFilters({ page: nextPage })}
+          itemsPerPage={limit}
+          onItemsPerPageChange={(nextLimit) =>
+            setFilters({ limit: nextLimit, page: 1 })
+          }
+          totalItems={totalItems}
         />
       </section>
     </>

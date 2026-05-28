@@ -4,11 +4,13 @@ import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { AuthFormValues, AuthMode, AuthPageProps } from "./types/auth.types";
 import { useAuthStore } from "@/store/auth-store";
-import { ROUTES } from "@/api/endpoints";
 import { authSchema } from "@/lib/schemas";
 import AuthForm from "@/components/auth/AuthForm";
 import { toast } from "sonner";
 
+const LOGIN_ROUTE = "/login";
+const REGISTER_ROUTE = "/register";
+const TASKS_ROUTE = "/tasks";
 
 export default function AuthPage({ mode }: AuthPageProps) {
   const router = useRouter();
@@ -33,7 +35,7 @@ export default function AuthPage({ mode }: AuthPageProps) {
       .some((cookie) => cookie.startsWith("accessToken="));
 
     if (hasAuthCookie) {
-      router.replace(ROUTES.tasks);
+      router.replace(TASKS_ROUTE);
       return;
     }
 
@@ -41,7 +43,7 @@ export default function AuthPage({ mode }: AuthPageProps) {
   }, [accessToken, clearAuth, router]);
 
   function handleModeChange(nextMode: AuthMode) {
-    router.push(nextMode === "login" ? ROUTES.login : ROUTES.register);
+    router.push(nextMode === "login" ? LOGIN_ROUTE : REGISTER_ROUTE);
   }
 
   async function handleSubmit(values: AuthFormValues) {
@@ -65,12 +67,12 @@ export default function AuthPage({ mode }: AuthPageProps) {
         : await register(validation.data);
 
     if (success) {
-      router.push(ROUTES.tasks);
+      router.push(TASKS_ROUTE);
     }
   }
 
   return (
-    <div className="mx-auto max-w-md">
+    <div className="mx-auto w-full max-w-md">
       <AuthForm
         mode={mode}
         onModeChange={handleModeChange}

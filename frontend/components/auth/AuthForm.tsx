@@ -29,7 +29,7 @@ export default function AuthForm({
   return (
     <GlobalForm
       onSubmit={handleSubmit(onSubmit)}
-      className="rounded-xl border border-[#d9dee5] bg-white p-6 shadow-sm"
+      className="rounded-lg border border-app-border bg-app-surface p-4 shadow-sm dark:border-app-border-dark dark:bg-app-surface-dark sm:p-6"
     >
       {onModeChange && (
         <AuthTabs mode={mode} onModeChange={onModeChange} />
@@ -46,7 +46,7 @@ export default function AuthForm({
             label="Username"
             type="text"
             placeholder="Enter username"
-            className="h-11 border-[#cfd6df] focus:border-[#3f7d58] focus:ring-2 focus:ring-[#3f7d58]/20"
+            className="h-11 focus:ring-2 focus:ring-app-primary-ring/20"
             error={errors.username?.message}
             {...field}
           />
@@ -64,7 +64,7 @@ export default function AuthForm({
             label="Password"
             type="password"
             placeholder="Enter password"
-            className="h-11 border-[#cfd6df] focus:border-[#3f7d58] focus:ring-2 focus:ring-[#3f7d58]/20"
+            className="h-11 focus:ring-2 focus:ring-app-primary-ring/20"
             error={errors.password?.message}
             {...field}
           />
@@ -74,7 +74,7 @@ export default function AuthForm({
       <GlobalButton
         type="submit"
         disabled={isBusy}
-        className="h-11 w-full bg-[#2f6f4e] text-sm font-bold hover:bg-[#255a40]"
+        className="h-11 w-full text-sm font-bold"
       >
         {isBusy
           ? "Please wait..."
@@ -84,7 +84,7 @@ export default function AuthForm({
       </GlobalButton>
 
       {message && (
-        <GlobalFormMessage tone="success" className="mt-4 bg-[#eef7f1] text-[#27563c]">
+        <GlobalFormMessage tone="success" className="mt-4">
           {message}
         </GlobalFormMessage>
       )}

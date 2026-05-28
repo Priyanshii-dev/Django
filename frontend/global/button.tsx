@@ -11,15 +11,15 @@ type GlobalButtonProps = React.ButtonHTMLAttributes<HTMLButtonElement> & {
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
-    "bg-slate-900 text-white hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200",
+    "bg-app-primary text-app-on-primary hover:bg-app-primary-hover",
   secondary:
-    "bg-slate-100 text-slate-900 hover:bg-slate-200 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700",
+    "bg-app-surface-muted text-app-text hover:bg-app-border dark:bg-app-surface-muted-dark dark:text-app-text-dark dark:hover:bg-app-border-dark",
   outline:
-    "border border-slate-300 bg-white text-slate-700 hover:bg-slate-50 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-200 dark:hover:bg-slate-900",
+    "border border-app-border bg-app-surface text-app-text hover:bg-app-hover dark:border-app-border-dark dark:bg-app-surface-dark dark:text-app-text-dark dark:hover:bg-app-hover-dark",
   ghost:
-    "text-slate-600 hover:bg-slate-100 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-white",
+    "text-app-muted hover:bg-app-surface-muted hover:text-app-text dark:text-app-muted-dark dark:hover:bg-app-hover-dark dark:hover:text-app-text-dark",
   danger:
-    "bg-red-600 text-white hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700",
+    "bg-app-danger text-app-on-primary hover:bg-app-danger-hover",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
@@ -39,7 +39,7 @@ export function GlobalButton({
     <button
       type={type}
       className={cn(
-        "inline-flex shrink-0 items-center justify-center gap-2 rounded-md font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-slate-400 disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-md font-semibold transition-colors outline-none focus-visible:ring-2 focus-visible:ring-app-primary-ring disabled:cursor-not-allowed disabled:opacity-60",
         variantClasses[variant],
         sizeClasses[size],
         className,

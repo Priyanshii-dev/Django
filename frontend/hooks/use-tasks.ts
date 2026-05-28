@@ -57,7 +57,7 @@ export function useTasks() {
     }
 
     try {
-      const newTask = await request<Task>(API_ENDPOINTS.tasks.list, {
+      const newTask = await request<Task>(API_ENDPOINTS.tasks.create, {
         method: "POST",
         body: JSON.stringify({ task: validation.data.task, is_completed: completed }),
       });

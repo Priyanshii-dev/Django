@@ -41,7 +41,7 @@ export function GlobalDialog({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/40 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto bg-app-overlay p-4"
       role="presentation"
       onMouseDown={closeDialog}
     >
@@ -50,7 +50,7 @@ export function GlobalDialog({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "relative w-full max-w-md rounded-lg border border-slate-200 bg-white p-5 shadow-xl dark:border-slate-800 dark:bg-slate-950",
+          "relative my-auto w-full max-w-md rounded-lg border border-app-border bg-app-surface p-4 shadow-xl dark:border-app-border-dark dark:bg-app-surface-dark sm:p-5",
           className,
         )}
         onMouseDown={(event) => event.stopPropagation()}
@@ -71,7 +71,7 @@ export function GlobalDialog({
         <h1
           id={titleId}
           className={cn(
-            "mb-5 pr-8 text-xl font-bold text-slate-950 dark:text-white",
+            "mb-5 pr-8 text-xl font-bold text-app-text dark:text-app-text-dark",
             hideTitle && "sr-only",
           )}
         >
@@ -129,9 +129,9 @@ export function GlobalFormModal({
       hideCloseButton
       hideTitle
     >
-      <div className="border-b px-4 py-3 sm:px-5 sm:py-4">
+      <div className="border-b border-app-border px-4 py-3 dark:border-app-border-dark sm:px-5 sm:py-4">
         <div className="flex items-center justify-between gap-3">
-          <h2 className="text-sm font-semibold text-slate-950 dark:text-white sm:text-[15px]">
+          <h2 className="text-sm font-semibold text-app-text dark:text-app-text-dark sm:text-[15px]">
             {title}
           </h2>
           <GlobalButton
@@ -154,7 +154,7 @@ export function GlobalFormModal({
 
         <GlobalFormActions
           className={cn(
-            "border-t px-4 py-3 sm:px-5 sm:py-4",
+            "flex-col-reverse border-t border-app-border px-4 py-3 dark:border-app-border-dark sm:flex-row sm:px-5 sm:py-4",
             footerClassName,
           )}
         >
@@ -162,14 +162,14 @@ export function GlobalFormModal({
             type="button"
             variant="outline"
             onClick={closeModal}
-            className="h-10 w-28 rounded-lg sm:w-36"
+            className="h-10 w-full rounded-lg sm:w-36"
           >
             {cancelLabel}
           </GlobalButton>
           <GlobalButton
             type="submit"
             disabled={isSubmitting}
-            className="h-10 w-28 rounded-lg sm:w-36"
+            className="h-10 w-full rounded-lg sm:w-36"
           >
             {isSubmitting ? submittingLabel : submitLabel}
           </GlobalButton>

@@ -5,8 +5,26 @@
    task_number: number;
    task: string;
    is_completed: boolean;
-   user: number;
+   user_id: number;
+   username: string;
  };
+
+export type TaskTableParams = {
+  page: number;
+  limit: number;
+  search: string;
+  status: TaskStatusFilter;
+};
+
+export type TaskTableResponse = {
+  results: Task[];
+  page: number;
+  limit: number;
+  total: number;
+  totalPages: number;
+  totalTasks: number;
+  completedTasks: number;
+};
 
  export type TaskFormProps = {
   value: string;

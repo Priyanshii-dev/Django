@@ -1,18 +1,18 @@
-from django.urls import include, path
-from rest_framework.routers import DefaultRouter
+from django.urls import path
 
-from .api_views import LoginAPI, RegisterAPI, TaskViewSet
+from .api.auth.login import LoginAPI
+from .api.auth.register import RegisterAPI
+from .api.tasks.task_create import TaskCreateAPI
+from .api.tasks.task_delete import TaskDeleteAPI
+from .api.tasks.task_detail import TaskDetailAPI
+from .api.tasks.task_fetch import TaskListAPI
+from .api.tasks.task_filter import TaskStatusFilterAPI
+from .api.tasks.task_search import TaskSearchAPI
+from .api.tasks.task_toggle import TaskToggleAPI
+from .api.tasks.task_update import TaskUpdateAPI
 from .auth_views import LoginUserView,LogoutUserView,RegisterView
 
 from .views import AboutView,ContactView,DeleteTaskView,HomePageView,TodoListView,ToggleTaskView   
-
-router = DefaultRouter()
-
-router.register(
-    r"tasks",
-    TaskViewSet,
-    basename="tasks"
-)
 
 urlpatterns = [
 
@@ -99,7 +99,62 @@ urlpatterns = [
     ),
 
     path(
-        "api/",
-        include(router.urls)
+        "api/tasks/",
+        TaskListAPI.as_view(),
+        name="api_tasks"
+    ),
+
+    path(
+        "api/tasks/list/",
+        TaskListAPI.as_view(),
+        name="api_task_list"
+    ),
+
+    path(
+        "api/tasks/create/",
+        TaskCreateAPI.as_view(),
+        name="api_task_create"
+    ),
+
+    path(
+        "api/tasks/search/",
+        TaskSearchAPI.as_view(),
+        name="api_task_search"
+    ),
+
+    path(
+        "api/tasks/filter/",
+        TaskStatusFilterAPI.as_view(),
+        name="api_task_filter"
+    ),
+
+    path(
+        "api/tasks/<int:task_id>/",
+        TaskDetailAPI.as_view(),
+        name="api_task_detail"
+    ),
+
+    path(
+        "api/tasks/<int:task_id>/detail/",
+        TaskDetailAPI.as_view(),
+        name="api_task_detail_only"
+    ),
+
+    path(
+        "api/tasks/<int:task_id>/edit/",
+        TaskUpdateAPI.as_view(),
+        name="api_task_update"
+    ),
+
+    path(
+        "api/tasks/<int:task_id>/delete/",
+        TaskDeleteAPI.as_view(),
+        name="api_task_delete"
+    ),
+
+    path(
+        "api/tasks/<int:task_id>/toggle/",
+        TaskToggleAPI.as_view(),
+        name="api_task_toggle"
     ),
 ]

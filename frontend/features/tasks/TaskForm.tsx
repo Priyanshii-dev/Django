@@ -77,13 +77,13 @@ export default function TaskForm({
       )}
 
       {loading ? (
-        <p className="text-sm text-slate-600 dark:text-slate-400">Loading task...</p>
+        <p className="text-sm text-app-muted dark:text-app-muted-dark">Loading task...</p>
       ) : (
         <GlobalForm onSubmit={handleSubmit(submitForm)}>
           {isDeleteMode ? (
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-app-muted dark:text-app-muted-dark">
               Are you sure you want to delete{" "}
-              <span className="font-semibold text-slate-950 dark:text-white">
+              <span className="font-semibold text-app-text dark:text-app-text-dark">
                 {task || "this task"}
               </span>
               ?
@@ -109,6 +109,7 @@ export default function TaskForm({
               type="button"
               variant="outline"
               onClick={onBack}
+              className="w-full sm:w-auto"
             >
               Cancel
             </GlobalButton>
@@ -117,6 +118,7 @@ export default function TaskForm({
               type="submit"
               disabled={submitting}
               variant={isDeleteMode ? "danger" : "primary"}
+              className="w-full sm:w-auto"
             >
               <ActionIcon className="size-4" />
               {submitting ? copy.loadingLabel : copy.submitLabel}

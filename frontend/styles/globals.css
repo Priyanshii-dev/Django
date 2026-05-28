@@ -1,36 +1,73 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-app-bg: #f6f7f9;
+  --color-app-bg-dark: #0f172a;
+  --color-app-surface: #ffffff;
+  --color-app-surface-dark: #020617;
+  --color-app-surface-muted: #eef1f5;
+  --color-app-surface-muted-dark: #0f172a;
+  --color-app-hover: #f8fafc;
+  --color-app-hover-dark: #0f172a;
+  --color-app-border: #d9dee5;
+  --color-app-border-strong: #cfd6df;
+  --color-app-border-dark: #1e293b;
+  --color-app-text: #1f2933;
+  --color-app-text-dark: #f8fafc;
+  --color-app-muted: #647282;
+  --color-app-muted-dark: #94a3b8;
+  --color-app-placeholder: #94a3b8;
+  --color-app-primary: #2f6f4e;
+  --color-app-primary-hover: #255a40;
+  --color-app-primary-soft: #eef7f1;
+  --color-app-primary-ring: #3f7d58;
+  --color-app-on-primary: #ffffff;
+  --color-app-inverse: #111827;
+  --color-app-on-inverse: #ffffff;
+  --color-app-overlay: #02061766;
+  --color-app-danger: #dc2626;
+  --color-app-danger-hover: #b91c1c;
+  --color-app-danger-soft: #fef2f2;
+  --color-app-danger-soft-dark: #450a0a4d;
+  --color-app-success: #047857;
+  --color-app-success-soft: #ecfdf5;
+  --color-app-success-soft-dark: #064e3b66;
+  --color-app-warning: #b45309;
+  --color-app-warning-soft: #fffbeb;
+  --color-app-warning-soft-dark: #451a0366;
+}
+
 :root {
   color-scheme: light;
-  background: #f6f7f9;
-  color: #1f2933;
 }
 
 :root.dark {
   color-scheme: dark;
-  background: #0f172a;
-  color: #f8fafc;
 }
 
-* {
-  box-sizing: border-box;
-}
+@layer base {
+  * {
+    @apply box-border;
+  }
 
-body {
-  min-height: 100vh;
-  margin: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: inherit;
-  color: inherit;
-}
+  body {
+    @apply m-0 min-h-screen overflow-x-hidden bg-app-bg text-app-text antialiased dark:bg-app-bg-dark dark:text-app-text-dark;
+    font-family: Arial, Helvetica, sans-serif;
+  }
 
-button,
-input,
-select {
-  font: inherit;
-}
+  button,
+  input,
+  select {
+    font: inherit;
+  }
 
-button:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
+  button {
+    @apply cursor-pointer;
+  }
+
+  button:disabled {
+    @apply cursor-not-allowed opacity-60;
+  }
 }

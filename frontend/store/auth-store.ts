@@ -17,7 +17,6 @@ type AuthCredentials = {
 interface AuthState {
   username: string;
   password: string;
-  loggedInUsername: string;
 
   accessToken: string | null;
   refreshToken: string | null;
@@ -43,7 +42,6 @@ export const useAuthStore = create<AuthState>()(
     (set, get) => ({
       username: "",
       password: "",
-      loggedInUsername: "", 
       accessToken: null,
       refreshToken: null,
 
@@ -77,14 +75,14 @@ export const useAuthStore = create<AuthState>()(
           );
 
           const tokens = mapTokenPair(response);
+          const actualUsername = response.user?.username ?? payload.username;
           saveTokens(tokens.access, tokens.refresh);
 
           set({
             accessToken: tokens.access,
             refreshToken: tokens.refresh,
             password: "",
-            loggedInUsername: payload.username,
-            username: payload.username,
+            username: actualUsername,
             message: "Login successful",
           });
           toast.success("Login successful");
@@ -128,13 +126,13 @@ export const useAuthStore = create<AuthState>()(
           );
 
           const tokens = mapTokenPair(response);
+          const actualUsername = response.user?.username ?? payload.username;
           saveTokens(tokens.access, tokens.refresh);
 
           set({
             accessToken: tokens.access,
             refreshToken: tokens.refresh,
-            loggedInUsername: payload.username,
-            username: payload.username,
+            username: actualUsername,
             message: "Registration successful",
             password: "",
           });
@@ -164,7 +162,6 @@ export const useAuthStore = create<AuthState>()(
         set({
           accessToken: null,
           refreshToken: null,
-          loggedInUsername: "", 
           username: "",
           password: "",
 
@@ -179,7 +176,6 @@ export const useAuthStore = create<AuthState>()(
         set({
           accessToken: null,
           refreshToken: null,
-          loggedInUsername: "",   
           username: "",
           password: "",
           message: "",
@@ -200,14 +196,15 @@ export const useAuthStore = create<AuthState>()(
         username: state.username,
       }),
       migrate: (persistedState) => {
-        const state = persistedState as Partial<AuthState> | undefined;
+        const state = persistedState as
+          | (Partial<AuthState> & { loggedInUsername?: string })
+          | undefined;
 
         return {
           accessToken: state?.accessToken ?? null,
           refreshToken: state?.refreshToken ?? null,
-          username: state?.username ?? "",
+          username: state?.username ?? state?.loggedInUsername ?? "",
           password: "",
-          loggedInUsername: state?.loggedInUsername ?? state?.username ?? "",
           isBusy: false,
           message: "",
         };

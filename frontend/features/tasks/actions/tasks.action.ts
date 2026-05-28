@@ -1,36 +1,73 @@
 "use client";
 
 import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { TaskFormMode, TaskFormValues } from "../TaskForm";
 import { useTodoStore } from "@/store/todo-store";
 import { useFetchData } from "@/api/hooks/useFetch";
 
-import { API_ENDPOINTS, ROUTES } from "@/api/endpoints";
+import { API_ENDPOINTS } from "@/api/endpoints";
 import { mapTask } from "@/api/mappers";
 import usePostData from "@/api/hooks/usePost";
 import usePutData from "@/api/hooks/use-put";
 import useDeleteData from "@/api/hooks/use-delete";
+import instance from "@/api/instance";
 import { taskSchema } from "@/lib/schemas";
-import { Task } from "../types/tasks.types";
+import { Task, TaskTableParams, TaskTableResponse } from "../types/tasks.types";
 import { useAuthStore } from "@/store/auth-store";
 import { toast } from "sonner";
 
+const TASKS_ROUTE = "/tasks";
+
 // Task Pannel
-  export function useTasksPanel() {
+export function useTasksPanel(params: TaskTableParams) {
   const message  = useTodoStore((s) => s.message);
   const accessToken = useAuthStore((s) => s.accessToken);
   const isAuthenticated = Boolean(accessToken);
 
-  const { isLoading: fetching, refetch, data: tasks = [] } = useFetchData<Task[]>({
-    url: API_ENDPOINTS.tasks.list,
-    enabled: isAuthenticated,           
-    queryOptions: {
-      select: (raw) => raw.map(mapTask),
+  const {
+    isLoading: fetching,
+    refetch,
+    data,
+  } = useQuery<TaskTableResponse>({
+    queryKey: [API_ENDPOINTS.tasks.list, params],
+    enabled: isAuthenticated,
+    queryFn: async () => {
+      const requestParams = {
+        page: params.page,
+        limit: params.limit,
+        ...(params.search.trim() ? { search: params.search.trim() } : {}),
+        ...(params.status !== "all" ? { status: params.status } : {}),
+      };
+
+      const response = await instance.get<{
+        data: TaskTableResponse;
+      }>(API_ENDPOINTS.tasks.list, {
+        params: requestParams,
+      });
+
+      return response.data.data;
     },
+    select: (raw) => ({
+      ...raw,
+      results: raw.results.map(mapTask),
+    }),
+    refetchOnWindowFocus: false,
   });
 
-  return { tasks, isAuthenticated, fetching, message, refetch };
+  return {
+    tasks: data?.results ?? [],
+    totalTasks: data?.totalTasks ?? 0,
+    completedTasks: data?.completedTasks ?? 0,
+    totalItems: data?.total ?? 0,
+    totalPages: data?.totalPages ?? 1,
+    currentPage: data?.page ?? params.page,
+    isAuthenticated,
+    fetching,
+    message,
+    refetch,
+  };
 }
 
 export function useTaskFormAction(mode: TaskFormMode) {
@@ -56,11 +93,11 @@ export function useTaskFormAction(mode: TaskFormMode) {
 
   //  Create
   const { mutateAsync: createTask, isPending: isCreating } = usePostData<Task, Partial<Task>>({
-    url: API_ENDPOINTS.tasks.list,
+    url: API_ENDPOINTS.tasks.create,
     showToast: true,
     onSuccess: (data) => {
       addTask(mapTask(data));
-      router.push(ROUTES.tasks);
+      router.push(TASKS_ROUTE);
     },
   });
 
@@ -70,7 +107,7 @@ export function useTaskFormAction(mode: TaskFormMode) {
   mutationOptions: {
     onSuccess: (data) => {
       updateTask(mapTask(data));
-      router.push(ROUTES.tasks);
+      router.push(TASKS_ROUTE);
     },
   },
 });
@@ -81,7 +118,7 @@ export function useTaskFormAction(mode: TaskFormMode) {
     mutationOptions: {
       onSuccess: () => {
         removeTask(Number(taskId));
-        router.push(ROUTES.tasks);
+        router.push(TASKS_ROUTE);
       },
     },
   });
@@ -130,7 +167,7 @@ export function useTaskFormAction(mode: TaskFormMode) {
     isLoading:    needsTask && isLoading,
     isSubmitting: isCreating || isEditing || isDeleting,
     message,
-    goBack:       () => router.push(ROUTES.tasks),
+    goBack:       () => router.push(TASKS_ROUTE),
     submitTask,
     deleteTask,
   };

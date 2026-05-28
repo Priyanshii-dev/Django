@@ -23,8 +23,8 @@ export function GlobalFormMessage({
       className={cn(
         "rounded-md px-3 py-2 text-sm",
         tone === "error"
-          ? "bg-red-50 text-red-700 dark:bg-red-950/30 dark:text-red-300"
-          : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+          ? "bg-app-danger-soft text-app-danger dark:bg-app-danger-soft-dark"
+          : "bg-app-success-soft text-app-success dark:bg-app-success-soft-dark",
         className,
       )}
       {...props}
@@ -38,7 +38,7 @@ export function GlobalFormActions({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("flex justify-end gap-2", className)}
+      className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
       {...props}
     />
   );

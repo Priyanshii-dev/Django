@@ -1,11 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 
-import {
-  PRIVATE_ROUTES,
-  PUBLIC_ROUTES,
-  ROUTES,
-} from "./api/endpoints";
+const HOME_ROUTE = "/";
+const LOGIN_ROUTE = "/login";
+const TASKS_ROUTE = "/tasks";
+const PUBLIC_ROUTES = [LOGIN_ROUTE, "/register"] as const;
+const PRIVATE_ROUTES = [TASKS_ROUTE] as const;
 
 function isRouteMatch(pathname: string, routes: readonly string[]) {
   return routes.some(
@@ -47,11 +47,11 @@ export function proxy(request: NextRequest) {
    */
   if (isAuthenticated) {
     if (
-      pathname === ROUTES.home ||
+      pathname === HOME_ROUTE ||
       isPublicRoute
     ) {
       return NextResponse.redirect(
-        new URL(ROUTES.tasks, request.url),
+        new URL(TASKS_ROUTE, request.url),
       );
     }
   }
@@ -63,7 +63,7 @@ export function proxy(request: NextRequest) {
   if (!isAuthenticated) {
     if (isPrivateRoute) {
       const loginUrl = new URL(
-        ROUTES.login,
+        LOGIN_ROUTE,
         request.url,
       );
 

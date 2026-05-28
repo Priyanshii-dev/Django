@@ -15,9 +15,10 @@ export function mapTokenPair(payload: AuthResponse): TokenPair {
 export function mapTask(payload: Task): Task {
   return {
     id: payload.id,
-    task_number: payload.task_number,
+    task_number: payload.task_number ?? payload.id,
     task: payload.task,
     is_completed: payload.is_completed,
-    user: payload.user,
+    user_id: payload.user_id,
+    username: payload.username ?? "",
   };
 }

@@ -29,7 +29,7 @@ export function ThemeToggle() {
       variant="outline"
       size="icon"
       onClick={toggleTheme}
-      className="size-10 text-slate-700 dark:text-slate-200"
+      className="size-10 text-app-text dark:text-app-text-dark"
       aria-label="Toggle theme"
       title="Toggle theme"
     >

@@ -13,11 +13,20 @@ class UserSerializer(serializers.ModelSerializer):
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    user_id = serializers.IntegerField(source="user.id", read_only=True)
+    username = serializers.CharField(source="user.username", read_only=True)
 
     class Meta:
         model = Task
-        fields = ["id", "task", "is_completed", "user"]
-        read_only_fields = ["user"]
+        fields = [
+            "id",
+            "task",
+            "is_completed",
+            "user_id",
+            "username",
+        ]
+        read_only_fields = ["user_id", "username"]
+
     def validate_task(self, value):
 
         value = value.strip()

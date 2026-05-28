@@ -109,7 +109,7 @@ class TaskAPITests(TestCase):
         )
 
         response = self.client.patch(
-            f"/api/tasks/{task.id}/",
+            f"/api/tasks/{task.id}/edit/",
             {
                 "task": "Updated task",
                 "is_completed": True,
@@ -142,9 +142,61 @@ class TaskAPITests(TestCase):
         self.assertEqual(response.data[0]["id"], own_task.id)
         self.assertEqual(response.data[0]["task"], "My task")
 
-    def test_create_task_api_assigns_current_user(self):
+    def test_table_task_api_returns_paginated_tasks(self):
+        for index in range(7):
+            Task.objects.create(
+                user=self.user,
+                task=f"My task {index + 1}",
+            )
+
         response = self.client.post(
             "/api/tasks/",
+            {
+                "page": 2,
+                "limit": 3,
+            },
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(response.data["success"])
+        self.assertEqual(response.data["data"]["page"], 2)
+        self.assertEqual(response.data["data"]["limit"], 3)
+        self.assertEqual(response.data["data"]["total"], 7)
+        self.assertEqual(response.data["data"]["totalPages"], 3)
+        self.assertEqual(len(response.data["data"]["results"]), 3)
+
+    def test_search_task_api_filters_by_name(self):
+        Task.objects.create(user=self.user, task="Buy milk")
+        Task.objects.create(user=self.user, task="Read book")
+
+        response = self.client.post(
+            "/api/tasks/search/",
+            {"name": "milk"},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["data"]), 1)
+        self.assertEqual(response.data["data"][0]["task"], "Buy milk")
+
+    def test_filter_task_api_filters_by_completed_status(self):
+        Task.objects.create(user=self.user, task="Done task", is_completed=True)
+        Task.objects.create(user=self.user, task="Pending task", is_completed=False)
+
+        response = self.client.post(
+            "/api/tasks/filter/",
+            {"is_completed": True},
+            format="json",
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data["data"]), 1)
+        self.assertTrue(response.data["data"][0]["is_completed"])
+
+    def test_create_task_api_assigns_current_user(self):
+        response = self.client.post(
+            "/api/tasks/create/",
             {
                 "task": "Owned task",
                 "is_completed": False,
@@ -164,7 +216,7 @@ class TaskAPITests(TestCase):
         )
 
         response = self.client.patch(
-            f"/api/tasks/{task.id}/",
+            f"/api/tasks/{task.id}/edit/",
             {"task": "   "},
             format="json",
         )
@@ -182,7 +234,7 @@ class TaskAPITests(TestCase):
         )
 
         response = self.client.patch(
-            f"/api/tasks/{task.id}/",
+            f"/api/tasks/{task.id}/edit/",
             {"task": "Changed by wrong user"},
             format="json",
         )
@@ -198,7 +250,7 @@ class TaskAPITests(TestCase):
             task="Delete me",
         )
 
-        response = self.client.delete(f"/api/tasks/{task.id}/")
+        response = self.client.delete(f"/api/tasks/{task.id}/delete/")
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Task.objects.filter(id=task.id).exists())
@@ -209,7 +261,7 @@ class TaskAPITests(TestCase):
             task="Do not delete me",
         )
 
-        response = self.client.delete(f"/api/tasks/{task.id}/")
+        response = self.client.delete(f"/api/tasks/{task.id}/delete/")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Task.objects.filter(id=task.id).exists())

@@ -81,17 +81,17 @@ export function CustomPagination({
     <div className="flex flex-col gap-3 py-4">
       <div className="flex flex-col items-start gap-2 sm:flex-row sm:items-center sm:justify-between">
         {totalItems && (
-          <div className="text-sm text-slate-600 dark:text-slate-400">
+          <div className="text-sm text-app-muted dark:text-app-muted-dark">
             Showing{" "}
-            <span className="font-semibold text-slate-900 dark:text-white">
+            <span className="font-semibold text-app-text dark:text-app-text-dark">
               {totalItems === 0 ? 0 : Math.max(1, (currentPage - 1) * itemsPerPage + 1)}
             </span>{" "}
             to{" "}
-            <span className="font-semibold text-slate-900 dark:text-white">
+            <span className="font-semibold text-app-text dark:text-app-text-dark">
               {Math.min(currentPage * itemsPerPage, totalItems)}
             </span>{" "}
             of{" "}
-            <span className="font-semibold text-slate-900 dark:text-white">
+            <span className="font-semibold text-app-text dark:text-app-text-dark">
               {totalItems}
             </span>{" "}
             results
@@ -99,10 +99,10 @@ export function CustomPagination({
         )}
 
         {onItemsPerPageChange && (
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
             <label
               htmlFor="items-per-page"
-              className="text-sm font-medium text-slate-700 dark:text-slate-300"
+              className="text-sm font-medium text-app-text dark:text-app-text-dark"
             >
               Show
             </label>
@@ -119,7 +119,7 @@ export function CustomPagination({
               }))}
               className="h-9"
             />
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <span className="text-sm font-medium text-app-text dark:text-app-text-dark">
               per page
             </span>
           </div>
@@ -127,8 +127,8 @@ export function CustomPagination({
       </div>
 
       <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
-        <div className="flex flex-wrap items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 shadow-sm dark:border-slate-800 dark:bg-slate-950">
-          <div className="flex align-middle gap-1">
+        <div className="flex w-full flex-wrap items-center justify-center gap-2 rounded-lg border border-app-border bg-app-surface px-2 py-2 shadow-sm dark:border-app-border-dark dark:bg-app-surface-dark sm:w-auto sm:px-3">
+          <div className="flex gap-1 align-middle">
             <GlobalButton
               onClick={() => onPageChange(1)}
               disabled={currentPage === 1}
@@ -137,7 +137,7 @@ export function CustomPagination({
               className="size-7"
               aria-label="First page"
             >
-              <ChevronsLeft className="w-4 h-4 text-muted-foreground dark:text-slate-400" />
+              <ChevronsLeft className="h-4 w-4 text-app-muted dark:text-app-muted-dark" />
             </GlobalButton>
 
             <GlobalButton
@@ -148,11 +148,11 @@ export function CustomPagination({
               className="size-7"
               aria-label="Previous page"
             >
-              <ChevronLeft className="w-4 h-4 text-muted-foreground dark:text-slate-400" />
+              <ChevronLeft className="h-4 w-4 text-app-muted dark:text-app-muted-dark" />
             </GlobalButton>
           </div>
 
-          <div className="flex items-center gap-1 px-2">
+          <div className="flex max-w-full items-center gap-1 overflow-x-auto px-1 sm:px-2">
             {renderPageNumbers().map((page, idx) => (
               <GlobalButton
                 key={idx}
@@ -162,10 +162,10 @@ export function CustomPagination({
                 size="icon"
                 className={`flex h-9 w-9 items-center justify-center rounded-md text-sm font-semibold transition-colors ${
                   page === currentPage
-                    ? "bg-slate-900 text-white dark:bg-white dark:text-slate-950"
+                    ? "bg-app-primary text-app-on-primary"
                     : typeof page === "number"
-                    ? "text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800"
-                    : "text-slate-400 dark:text-slate-600 cursor-default"
+                    ? "text-app-text hover:bg-app-surface-muted dark:text-app-text-dark dark:hover:bg-app-hover-dark"
+                    : "cursor-default text-app-placeholder"
                 }`}
               >
                 {page}
@@ -173,7 +173,7 @@ export function CustomPagination({
             ))}
           </div>
 
-          <div className="flex align-middle gap-1">
+          <div className="flex gap-1 align-middle">
             <GlobalButton
               onClick={() => onPageChange(currentPage + 1)}
               disabled={currentPage === totalPages}
@@ -182,7 +182,7 @@ export function CustomPagination({
               className="size-7"
               aria-label="Next page"
             >
-              <ChevronRight className="w-4 h-4 text-muted-foreground dark:text-slate-400" />
+              <ChevronRight className="h-4 w-4 text-app-muted dark:text-app-muted-dark" />
             </GlobalButton>
             <GlobalButton
               onClick={() => onPageChange(totalPages)}
@@ -192,12 +192,12 @@ export function CustomPagination({
               className="size-7"
               aria-label="Last page"
             >
-              <ChevronsRight className="w-4 h-4 text-muted-foreground dark:text-slate-400" />
+              <ChevronsRight className="h-4 w-4 text-app-muted dark:text-app-muted-dark" />
             </GlobalButton>
           </div>
 
-          <div className="flex items-center gap-2 rounded-md bg-white pr-1 dark:bg-slate-950">
-            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+          <div className="flex w-full flex-wrap items-center justify-center gap-2 rounded-md bg-app-surface px-1 dark:bg-app-surface-dark sm:w-auto sm:justify-start sm:pr-1">
+            <span className="text-sm font-medium text-app-text dark:text-app-text-dark">
               Go to
             </span>
             <GlobalInput
@@ -206,7 +206,7 @@ export function CustomPagination({
               max={totalPages}
               onKeyDown={(e) => e.key === "Enter" && handleGoToPage()}
               placeholder="Page"
-              className="h-9 w-20 bg-slate-50 text-center font-medium placeholder:text-slate-400"
+              className="h-9 w-20 bg-app-hover text-center font-medium placeholder:text-app-placeholder dark:bg-app-hover-dark"
               {...register("goToPage")}
             />
             <GlobalButton
