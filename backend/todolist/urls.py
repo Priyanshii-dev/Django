@@ -75,18 +75,6 @@ urlpatterns = [
 
     # API
     path(
-        "api/register/",
-        RegisterAPI.as_view(),
-        name="api_register"
-    ),
-
-    path(
-        "api/login/",
-        LoginAPI.as_view(),
-        name="api_login"
-    ),
-
-    path(
         "api/auth/register/",
         RegisterAPI.as_view(),
         name="api_auth_register"

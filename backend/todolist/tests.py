@@ -13,7 +13,7 @@ class AuthAPITests(TestCase):
 
     def test_register_api_creates_user_and_returns_tokens(self):
         response = self.client.post(
-            "/api/register/",
+            "/api/auth/register/",
             {
                 "username": "newuser",
                 "password": "StrongPass123!",
@@ -36,7 +36,7 @@ class AuthAPITests(TestCase):
         )
 
         response = self.client.post(
-            "/api/register/",
+            "/api/auth/register/",
             {
                 "username": "Existing",
                 "password": "StrongPass123!",
@@ -54,7 +54,7 @@ class AuthAPITests(TestCase):
         )
 
         response = self.client.post(
-            "/api/login/",
+            "/api/auth/login/",
             {
                 "username": "activeuser",
                 "password": "StrongPass123!",
@@ -71,7 +71,7 @@ class AuthAPITests(TestCase):
 
     def test_login_api_rejects_invalid_credentials(self):
         response = self.client.post(
-            "/api/login/",
+            "/api/auth/login/",
             {
                 "username": "missing",
                 "password": "wrongpass",
