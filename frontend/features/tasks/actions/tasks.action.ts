@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useParams, useRouter } from "next/navigation";
 import { TaskFormMode, TaskFormValues } from "../TaskForm";
 import { useTodoStore } from "@/store/todo-store";
@@ -70,8 +70,42 @@ export function useTasksPanel(params: TaskTableParams) {
   };
 }
 
+export function useBulkToggleTasks() {
+  const queryClient = useQueryClient();
+  const [message, setMessage] = useState("");
+
+  const { mutateAsync, isPending } = useMutation<void, Error, number>({
+    mutationFn: async (taskId) => {
+      await instance.post(API_ENDPOINTS.tasks.toggle(taskId));
+    },
+  });
+
+  async function toggleTasks(taskIds: number[]) {
+    if (!taskIds.length) return false;
+
+    setMessage("");
+
+    try {
+      await Promise.all(taskIds.map((taskId) => mutateAsync(taskId)));
+      await queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.tasks.list] });
+      return true;
+    } catch (error) {
+      setMessage(error instanceof Error ? error.message : "Unable to toggle selected tasks.");
+      return false;
+    }
+  }
+
+  return {
+    bulkToggling: isPending,
+    bulkMessage: message,
+    clearBulkMessage: () => setMessage(""),
+    toggleTasks,
+  };
+}
+
 export function useTaskFormAction(mode: TaskFormMode) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const params = useParams<{ id?: string }>();
   const taskId = params.id ?? "";
 
@@ -95,8 +129,9 @@ export function useTaskFormAction(mode: TaskFormMode) {
   const { mutateAsync: createTask, isPending: isCreating } = usePostData<Task, Partial<Task>>({
     url: API_ENDPOINTS.tasks.create,
     showToast: true,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       addTask(mapTask(data));
+      await queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.tasks.list] });
       router.push(TASKS_ROUTE);
     },
   });
@@ -105,8 +140,9 @@ export function useTaskFormAction(mode: TaskFormMode) {
   const { mutateAsync: editTask, isPending: isEditing } = usePutData<Partial<Task>, Task>({
   url: API_ENDPOINTS.tasks.edit(Number(taskId)),
   mutationOptions: {
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       updateTask(mapTask(data));
+      await queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.tasks.list] });
       router.push(TASKS_ROUTE);
     },
   },
@@ -116,8 +152,9 @@ export function useTaskFormAction(mode: TaskFormMode) {
   const { mutateAsync: destroyTask, isPending: isDeleting } = useDeleteData<Task>({
     url: API_ENDPOINTS.tasks.delete(Number(taskId)),
     mutationOptions: {
-      onSuccess: () => {
+      onSuccess: async () => {
         removeTask(Number(taskId));
+        await queryClient.invalidateQueries({ queryKey: [API_ENDPOINTS.tasks.list] });
         router.push(TASKS_ROUTE);
       },
     },

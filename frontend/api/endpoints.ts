@@ -7,8 +7,8 @@ export const API_ENDPOINTS = {
     list: "/api/tasks/",
     create: "/api/tasks/create/",
     detail: (id: number) => `/api/tasks/${id}/`,
-    edit:   (id: number) => `/api/tasks/${id}/edit/`,
-    delete: (id: number) => `/api/tasks/${id}/delete/`,
-    toggle: (id: number) => `/api/tasks/${id}/toggle/`,
+    edit:   (id: number) => `/api/tasks/edit/${id}`,
+    delete: (id: number) => `/api/tasks/delete/${id}`,
+    toggle: (id: number) => `/api/tasks/toggle/${id}`,
   },
 } as const;

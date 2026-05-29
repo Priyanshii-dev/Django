@@ -93,12 +93,6 @@ urlpatterns = [
     ),
 
     path(
-        "api/tasks/list/",
-        TaskListAPI.as_view(),
-        name="api_task_list"
-    ),
-
-    path(
         "api/tasks/create/",
         TaskCreateAPI.as_view(),
         name="api_task_create"
@@ -123,25 +117,19 @@ urlpatterns = [
     ),
 
     path(
-        "api/tasks/<int:task_id>/detail/",
-        TaskDetailAPI.as_view(),
-        name="api_task_detail_only"
-    ),
-
-    path(
-        "api/tasks/<int:task_id>/edit/",
+        "api/tasks/edit/<int:task_id>",
         TaskUpdateAPI.as_view(),
         name="api_task_update"
     ),
 
     path(
-        "api/tasks/<int:task_id>/delete/",
+        "api/tasks/delete/<int:task_id>",
         TaskDeleteAPI.as_view(),
         name="api_task_delete"
     ),
 
     path(
-        "api/tasks/<int:task_id>/toggle/",
+        "api/tasks/toggle/<int:task_id>",
         TaskToggleAPI.as_view(),
         name="api_task_toggle"
     ),

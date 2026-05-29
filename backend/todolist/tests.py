@@ -109,7 +109,7 @@ class TaskAPITests(TestCase):
         )
 
         response = self.client.patch(
-            f"/api/tasks/{task.id}/edit/",
+            f"/api/tasks/edit/{task.id}",
             {
                 "task": "Updated task",
                 "is_completed": True,
@@ -216,7 +216,7 @@ class TaskAPITests(TestCase):
         )
 
         response = self.client.patch(
-            f"/api/tasks/{task.id}/edit/",
+            f"/api/tasks/edit/{task.id}",
             {"task": "   "},
             format="json",
         )
@@ -234,7 +234,7 @@ class TaskAPITests(TestCase):
         )
 
         response = self.client.patch(
-            f"/api/tasks/{task.id}/edit/",
+            f"/api/tasks/edit/{task.id}",
             {"task": "Changed by wrong user"},
             format="json",
         )
@@ -250,7 +250,7 @@ class TaskAPITests(TestCase):
             task="Delete me",
         )
 
-        response = self.client.delete(f"/api/tasks/{task.id}/delete/")
+        response = self.client.delete(f"/api/tasks/delete/{task.id}")
 
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Task.objects.filter(id=task.id).exists())
@@ -261,7 +261,7 @@ class TaskAPITests(TestCase):
             task="Do not delete me",
         )
 
-        response = self.client.delete(f"/api/tasks/{task.id}/delete/")
+        response = self.client.delete(f"/api/tasks/delete/{task.id}")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
         self.assertTrue(Task.objects.filter(id=task.id).exists())

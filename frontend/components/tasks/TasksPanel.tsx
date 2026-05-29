@@ -10,7 +10,7 @@ import { TaskNavbar } from "@/features/tasks/navbar/task-navbar";
 import TaskStats from "./TaskStats";
 import { CustomPagination } from "@/global/global-pagination";
 import { Task, TaskStatusFilter } from "@/features/tasks/types/tasks.types";
-import { useTasksPanel } from "@/features/tasks/actions/tasks.action";
+import { useBulkToggleTasks, useTasksPanel } from "@/features/tasks/actions/tasks.action";
 import { GlobalButton } from "@/global/button";
 import { GlobalFormMessage } from "@/global/form";
 import { GlobalInput, GlobalSelect } from "@/global/input";
@@ -34,6 +34,13 @@ export default function TasksPanel() {
   const logout = useAuthStore((state) => state.logout);
 
   const [openActionId, setOpenActionId] = useState<number | null>(null);
+  const [selectedTaskIds, setSelectedTaskIds] = useState<number[]>([]);
+  const {
+    bulkToggling,
+    bulkMessage,
+    clearBulkMessage,
+    toggleTasks,
+  } = useBulkToggleTasks();
   const [filters, setFilters] = useQueryStates(taskQueryParams, {
     shallow: true,
   });
@@ -77,6 +84,40 @@ export default function TasksPanel() {
     return () => document.removeEventListener("mousedown", handleOutsideClick);
   }, [openActionId]);
 
+  useEffect(() => {
+    const visibleTaskIds = new Set(tasks.map((task) => task.id));
+    setSelectedTaskIds((current) => {
+      const next = current.filter((id) => visibleTaskIds.has(id));
+      return next.length === current.length ? current : next;
+    });
+  }, [tasks]);
+
+  const allVisibleSelected =
+    tasks.length > 0 && tasks.every((task) => selectedTaskIds.includes(task.id));
+
+  function toggleSelectAll() {
+    clearBulkMessage();
+    setSelectedTaskIds(allVisibleSelected ? [] : tasks.map((task) => task.id));
+  }
+
+  function toggleSelectTask(taskId: number) {
+    clearBulkMessage();
+    setSelectedTaskIds((current) =>
+      current.includes(taskId)
+        ? current.filter((id) => id !== taskId)
+        : [...current, taskId],
+    );
+  }
+
+  async function toggleSelectedTasks() {
+    if (!selectedTaskIds.length) return;
+
+    const toggled = await toggleTasks(selectedTaskIds);
+    if (toggled) {
+      setSelectedTaskIds([]);
+    }
+  }
+
   if (!isAuthenticated) {
     return (
       <div className="mx-auto mt-8 max-w-2xl rounded-lg border border-app-border bg-app-surface p-6 text-center shadow-sm dark:border-app-border-dark dark:bg-app-surface-dark">
@@ -91,6 +132,30 @@ export default function TasksPanel() {
   }
 
   const columns: GlobalTableColumn<Task>[] = [
+    {
+      key: "select",
+      header: (
+        <input
+          type="checkbox"
+          checked={allVisibleSelected}
+          onChange={toggleSelectAll}
+          disabled={!tasks.length || fetching || bulkToggling}
+          aria-label="Select all tasks"
+          className="size-4 rounded border-app-border accent-app-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-app-border-dark"
+        />
+      ),
+      className: "w-12",
+      render: (task) => (
+        <input
+          type="checkbox"
+          checked={selectedTaskIds.includes(task.id)}
+          onChange={() => toggleSelectTask(task.id)}
+          disabled={bulkToggling}
+          aria-label={`Select task ${task.task_number}`}
+          className="size-4 rounded border-app-border accent-app-primary disabled:cursor-not-allowed disabled:opacity-50 dark:border-app-border-dark"
+        />
+      ),
+    },
     {
       key: "id",
       header: "Task ID",
@@ -195,18 +260,41 @@ export default function TasksPanel() {
             />
           </div>
 
-          <GlobalButton
-            type="button"
-            onClick={() => router.push(TASK_CREATE_ROUTE)}
-            className="w-full sm:w-auto"
-          >
-            <Plus className="size-4" /> Add Task
-          </GlobalButton>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
+            <span className="text-sm font-medium text-app-muted dark:text-app-muted-dark">
+              {selectedTaskIds.length} selected
+            </span>
+            <GlobalButton
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={toggleSelectedTasks}
+              disabled={!selectedTaskIds.length || bulkToggling}
+              className="w-full sm:w-auto"
+            >
+              <CheckCircle2 className="size-4" />
+              {bulkToggling ? "Toggling" : "Toggle selected"}
+            </GlobalButton>
+
+            <GlobalButton
+              type="button"
+              onClick={() => router.push(TASK_CREATE_ROUTE)}
+              className="w-full sm:w-auto"
+            >
+              <Plus className="size-4" /> Add Task
+            </GlobalButton>
+          </div>
         </div>
 
         {message && (
           <GlobalFormMessage tone="success" className="mb-4">
             {message}
+          </GlobalFormMessage>
+        )}
+
+        {bulkMessage && (
+          <GlobalFormMessage className="mb-4">
+            {bulkMessage}
           </GlobalFormMessage>
         )}
 

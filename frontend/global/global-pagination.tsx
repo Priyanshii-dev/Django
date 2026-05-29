@@ -37,6 +37,12 @@ export function CustomPagination({
     defaultValues: { goToPage: "" },
   });
   const goToPage = watch("goToPage");
+  const goToPageField = register("goToPage", {
+    onChange: (event) => {
+      const input = event.target as HTMLInputElement;
+      input.value = input.value.replace(/\D/g, "");
+    },
+  });
 
   const renderPageNumbers = () => {
     const pages: (number | string)[] = [];
@@ -66,11 +72,9 @@ export function CustomPagination({
   };
 
   const handleGoToPage = () => {
-    const page = parseInt(goToPage) || 1;
-    if (page >= 1 && page <= totalPages) {
-      onPageChange(page);
-      resetField("goToPage");
-    }
+    const page = Math.min(totalPages, Math.max(1, parseInt(goToPage, 10) || 1));
+    onPageChange(page);
+    resetField("goToPage");
   };
 
   if (totalPages <= 0) {
@@ -201,13 +205,18 @@ export function CustomPagination({
               Go to
             </span>
             <GlobalInput
-              type="number"
-              min="1"
-              max={totalPages}
-              onKeyDown={(e) => e.key === "Enter" && handleGoToPage()}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              minLength={1}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  handleGoToPage();
+                }
+              }}
               placeholder="Page"
               className="h-9 w-20 bg-app-hover text-center font-medium placeholder:text-app-placeholder dark:bg-app-hover-dark"
-              {...register("goToPage")}
+              {...goToPageField}
             />
             <GlobalButton
               onClick={handleGoToPage}
