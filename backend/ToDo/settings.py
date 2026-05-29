@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv("SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG") == "True"
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver", "https://todo-fullstack-app-mocha.vercel.app",os.getenv("RENDER_EXTERNAL_HOSTNAME", ""),]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "testserver", "todo-fullstack-app-mocha.vercel.app", "todo-fullstack-1bj6.onrender.com"]
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
