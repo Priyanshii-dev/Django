@@ -36,7 +36,7 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
     "http://127.0.0.1:8000",
-    "https://todo-fullstack-1bj6.onrender.com/"
+    "https://todo-fullstack-1bj6.onrender.com/",
     os.getenv("FRONTEND_URL", ""), 
 ]
 
